@@ -1,85 +1,221 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clear all; close all; clc;
+% "Chiaroscuro" still life drawing robot, EECS 206A Final Project, Group 39: Avery Rock
+% email: avery_rock@berkeley.edu
+% SID: 3034290042
+% Dec. 12, 2019. 
 
-% aa aa 03 1f 00 00 e1 % move around
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-
-
-% procedure: 
+% procedure:
 
 % pair to arm
-% pair to camera, turn it on. 
+% pair to camera, turn it on.
 
-% move camera to position to look at scene, snap a picture, return paths. 
+% move camera to position to look at scene, snap a picture, return paths.
 % move camera to position to look at paper, check if paper is there
 % (ideally do the movement while the planning is going on)
-% if paper is not detected, throw an error and stop. 
-% if paper is detected, begin drawing sequence. 
+% if paper is not detected, throw an error and stop.
+% if paper is detected, begin drawing sequence.
 
 % drawing sequence: for each path returned, put the pen down, begin a
 % continuous path, pick up at end. Repeat until all paths are completed. No
-% idea how to deal with errors. 
+% idea how to deal with errors.
 
-s = startup_serial(); 
+clear all; close all; clc;
 
-fopen(s);
+r = [135, 147, 60]; % link lengths
 
-gotoConfig = hex2dec({'AA','AA','03', '1F','00','00','E1'}); % homing command
-fwrite(s,gotoConfig);
+pen_z = 2.6*25.4; % verify before drawing!
+base_z = 135; % height of origin from table. 
+pen_tol = 0; 
+paper_dims = [5*25.4, 12.5*25.4, -3.5*25.4, 3.5*25.4, pen_z - base_z - pen_tol]; % minx, maxx, miny, maxy, z
+travel_z = paper_dims(5) + 10; 
+s = startup_serial(); fopen(s);
+% toPoint(r(2) + r(3), 0, r(1), s); pause(5); 
+
+% try
+%     cam = start_cam();
+% end
+% [x, y] = image_capture(cam); % larger of the two is between 0 and 1, smaller is 0 and less than 1. x assumed larger.
+
+[x, y] = drawme2(imread('dannydevito.jpg')); 
+
+scale = (paper_dims(4) - paper_dims(3))/1; 
+minx = paper_dims(1); 
+miny = paper_dims(3); 
+
+figure(); hold on
+for i = 1:numel(x)
+    plot(x{i}*scale + minx, y{i}*scale + miny, 'k-', 'LineWidth', .01)
+end
+hold off
+axis equal
 
 
-% fread(s, 8)
-% thing = read(s, 8, 'char')
 
-disp(s)
-fclose(s); 
+home_payload = {'1F','00','00'}; % homing command
+home_cmd = make_cmd(home_payload); 
+fwrite(s, home_cmd)
+pause(20)
 
+%%
+toPoint(250, 0, 0, s); 
+%%
+for i = 1:numel(x)
+    xx = x{i}*scale + minx; yy = y{i}*scale + miny; 
+    pause(1)
+    
+    toPoint(xx(1), yy(1), travel_z, s); 
+    for j = 1:numel(x{i})
+        
+        toPoint(xx(j), yy(j), paper_dims(5), s); 
+        pause(.1)
+    end
+    
+    toPoint(xx(j), yy(j), travel_z, s); % pick back up
+    pause(.2)
+end
+
+toPoint(r(2) + r(3), 0, r(1), s); % perfectly upright
+
+%%
+toPoint(100, 0, 0, s)
+fclose(s);
+
+
+%%
+
+function [x, y] = image_capture(cam)
+
+I = snapshot(cam);
+figure()
+imshow(I)
+[x, y] = drawme2(I, 1, 1);  % return paths
+
+end
+
+function cam = start_cam()
+cam = webcam(2);
+preview(cam); pause(1)
+end
 
 function s = startup_serial()
 
-if ~isempty(instrfind) % cler away old gunk
+if ~isempty(instrfind) % clear away old gunk
     fclose(instrfind);
     delete(instrfind);
 end
 
 serial_devices = seriallist; % find all serial devices
-sprintf(serial_devices(3)); 
+% s = serial(serial_devices(1)); % windows syntax
+sprintf(serial_devices(3));
 s = serial(serial_devices(3), 'BaudRate', 115200); % connect to the last one (verify this in general)
 s.Terminator = '';
 end
 
-function SetCPParams(x, y, z)
-header = {'AA', 'AA'}; 
-len = 15; 
-id = 90; 
-rw = 1; 
-
-isQ = 1; 
-
+function toPoint(x, y, z, s)
+    payload = PTP_payload(x, y, z); 
+    PTP_cmd = make_cmd(payload); 
+%     disp(PTP_cmd')
+    fwrite(s, PTP_cmd); 
 end
 
-function setPTPCmd(x, y, z, r)
+% function payload = SetCPParams(x, y, z)
+% 
+% id = {'90'};
+% rwq = {'11'}; 
+% 
+% end
 
-header = {'AA', 'AA'}; 
-len = {'13'}; 
-id = {'54'}; 
-rw = {'03'}; 
-
-isQ = 1; 
-
-
-
+function payload = PTP_payload(x, y, z)
+id = {'54'};
+rwq = {'03'};
+mode = {'01'}; 
+params = hexcoord([x, y, z, 0]); 
+payload = [id, rwq, mode, params]; 
 end
 
-function out = getPose()
+function out = checksum(payload)
+% compute checksum by finding bitwise complement of bytewise sum of command
+% payload.
+
+tot = 0;
+for i = 1:numel(payload)
+    tot = tot + hex2dec(payload{i});
+end
+out = dec2hex(2^8 - mod(tot, 2^8));
+end
+
+function out = make_cmd(payload)
+% convert payload into valid serial command for dobot magician
 header = {'AA', 'AA'};
-len = {'02'}; 
-id = {'0A'}; 
-rw = {'00'}; 
-payload = {}; 
-CS = {'F6'};
+len = {dec2hex(numel(payload), 2)};
+cs = {checksum(payload)};
+out = uint8(hex2dec([header, len, payload, cs]));
+end
 
-out = hex2dec([header, len, id, rw, payload, CS]); 
+function out = hexcoord(coords)
+% converts an array of floats into hex floats
+% disp(coords)
+out = cell(0);
+for i = 1:numel(coords)
+    out = [out, hexfloat(coords(i))]; 
+end
+end
 
+function s = hexfloat(d)
+% this function converts a number d into a 4-byte float in IEEE-754 little
+% endian notation for use with dobot serial communication.
+
+% it's literally just easier to reconstruct it manually??
+% https://www.h-schmidt.net/FloatConverter/IEEE754.html
+
+b = false(1, 32); % empty binary array
+if d ~= 0
+b(1) = d < 0; % sign bit
+exp = 127 + floor(log2(abs(d))); % exponent
+b(2:9) = flip(bitget(uint8(exp), 1:8)); % exponent
+m = abs(d) * 2^(127-exp);  % mantissa,
+
+m_array = false(1, 23);
+m = m - 1; % leading 1 dropped.
+for i = 1:numel(m_array)
+    if m >= 2^(-i)
+        m_array(i) = true;
+        m = m - 2^(-i);
+    end
+end
+b(10:end) = m_array;
+end
+
+hex_str = bin2hex(b);
+s = cell(0);
+for i = 1:numel(hex_str)/2
+    
+    s = [{hex_str(1 + 2*(i - 1):2*i )}, s];
+end
+end
+
+function out = bin2hex(bin_array)
+% take in an array of n x 4-bit binary data and converts it to n x 1 hex.
+
+b_str = num2str(bin_array); % convert to binary strings
+b_str(isspace(b_str)) = ''; % remove spaces
+vals = bin2dec(b_str);
+out = dec2hex(vals, 8);
+end
+
+function out = getPose_payload()
+id = {'10'};
+rwq = {'00'};
+out = [id, rwq];
+end
+
+function out = getPose(s)
+payload = getPose_payload();
+getPose_cmd = make_cmd(payload);
+fwrite(s, getPose_cmd);
+pose = fread(s, 3 + 34);
+out = pose; % need to invert the float thing to get actual numbers out of this: doable
 end

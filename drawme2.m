@@ -1,32 +1,36 @@
 % close all; clear all; clc;
-function [outx, outy] = drawme2(I, plt, sig)
+function [outx, outy] = drawme2(I)
 
-outx = {}; outy = {}; 
+outx = {}; outy = {};
+plt = 1;
 
 % PARAMETERS
-int_pts = 10; 
+imsize = 500; 
+int_pts = 2;
 shading_visits = 1;
 markov_decay = .7;
 gridx = 1;
 gridy = 1;
-canvas = .98;
-noise = 3;
-dec = 100;
-edr = 2; 
+noise = 5;
+dec = 50000/imsize;
+edr = 2;
 ddr = 15;
-sa = [(1 - canvas)/3, .25]; % signature area
-edge_step = 5;
-pix_const = 5;
-dark_bins = [.1 .3 .6]; 
-shading_densities = (1 - dark_bins + min(dark_bins)).^2; shading_densities = shading_densities / max(shading_densities); 
-canny_size = 6; 
 
-sig_color = [0 0 0]; 
+edge_step = imsize/50;
+pix_const = 10;
+dark_bins = [.1 .2 .4 .7];
+shading_densities = (1 - dark_bins + min(dark_bins)).^2; shading_densities = shading_densities / max(shading_densities);
+canny_size = 1;
+
+% canvas = 1;
+% sa = [(1 - canvas)/3, .25]; % signature area
+% sig_color = [0 0 0];
 
 % LOAD IMAGE
-% I = imread('input_images/black.jpg');
-I = imresize(I, 1000/size(I, 1));
+I = imresize(I, imsize/size(I, 1)); 
+xscale = size(I, 2); yscale = size(I, 1); scale = max(xscale, yscale); 
 I = double(rgb2gray(I));
+I = (I)/(max(I(:)) - min(I(:)));
 
 % EDGE DETECTION
 BWs = edge(I, 'canny', [], canny_size);
@@ -47,28 +51,27 @@ for ed = 1:n
 end
 
 % DARK CLUSTERS
-
-h = fspecial('gaussian', 9, 3); 
-I = imfilter(I, h, 'replicate'); 
+h = fspecial('gaussian', 9, 3);
+I = imfilter(I, h, 'replicate');
 [c, b] = imhist(I/255);
-imq = imquantize(I, dark_bins*max(I(:))); 
-darks = cell([], 2); 
+imq = imquantize(I, dark_bins*max(I(:)));
+darks = cell([], 2);
 for bin = 1:numel(dark_bins)
-[dlabels, dcount] = bwlabel(imq == bin);
-dark_cat = cell(dcount, 2);
-for d = 1:dcount
-    if nnz(dlabels == d) > numel(I)*5e-4
-        [xd, yd] = ind2sub(size(I), vecProb(dlabels(:) == d, ceil(pix_const*shading_densities(bin)*sqrt(nnz(dlabels == d)))));
-        xd(xd > size(I, 1)) = size(I, 1); yd(yd > size(I, 2)) = size(I, 2);
-        dark_cat{d, 1} = xd; dark_cat{d, 2} = yd;
+    [dlabels, dcount] = bwlabel(imq == bin);
+    dark_cat = cell(dcount, 2);
+    for d = 1:dcount
+        if nnz(dlabels == d) > numel(I)*5e-4
+            [xd, yd] = ind2sub(size(I), vecProb(dlabels(:) == d, ceil(pix_const*shading_densities(bin)*sqrt(nnz(dlabels == d)))));
+            xd(xd > size(I, 1)) = size(I, 1); yd(yd > size(I, 2)) = size(I, 2);
+            dark_cat{d, 1} = xd; dark_cat{d, 2} = yd;
+        end
     end
-end
-darks = [darks; dark_cat]; 
+    darks = [darks; dark_cat];
 end
 
 %% represent image processing
 if plt
-figure(1); clf;
+figure(); hold on
 subplot(1, 3, 1)
 imshow(I/255); title("Input Image")
 subplot(1, 3, 2)
@@ -76,11 +79,13 @@ imshow(BWs); title("Edges");
 subplot(1, 3, 3)
 imshow(double(imq)/max(imq(:))); title("Posterized Image");
 end
-
+hold off
 %%
 if plt
-figure(2)
-imshow(ones(gridy*size(I, 1), gridx*size(I, 2))); hold on
+figure(); hold on
+set(gca, 'Ydir', 'reverse'); set(gca, 'YAxisLocation', 'Right')
+set(gca, 'visible', 'off', 'xtick', []); axis equal off
+% imshow(ones(gridy*size(I, 1), gridx*size(I, 2)));
 end
 for i = 1:gridx
     for j = 1:gridy
@@ -89,18 +94,18 @@ for i = 1:gridx
             if numel(xe) >= 2
                 t = linspace(0, 1, numel(xe));
                 for dr = 1:edr
-                xx = spline(t, xe + noise*(rand(size(xe)) - .5), linspace(0, 1, int_pts*numel(xe)));
-                yy = spline(t, ye + noise*(rand(size(ye)) - .5), linspace(0, 1, int_pts*numel(xe)));
-                
-                outx = [outx; xx]; % concatenate new path points to old
-                outy = [outy; yy]; 
-                
-                if plt
-                figure(2); hold on
-                plot((i - 1 + (1-canvas)/2)*size(I, 2) + yy*canvas, (j - 1 + (1-canvas)/2)*size(I, 1) + xx*canvas, ...
-                    'k-', 'LineWidth', .0001); 
-                hold on
-                end
+                    xx = spline(t, xe + noise*(rand(size(xe)) - .5), linspace(0, 1, int_pts*numel(xe)));
+                    yy = spline(t, ye + noise*(rand(size(ye)) - .5), linspace(0, 1, int_pts*numel(xe)));
+                    
+                    outx = [outx; (xscale -xx)/scale]; % concatenate new path points to old
+                    outy = [outy; (yy) /scale];
+                    
+                    %                 if plt
+                    % %                 figure(2); hold on
+                    %                 plot((i - 1 + (1-canvas)/2)*size(I, 2) + yy*canvas, (j - 1 + (1-canvas)/2)*size(I, 1) + xx*canvas, ...
+                    %                     'k-', 'LineWidth', .0001);
+                    %                 hold on
+                    %                 end
                 end
             end
         end
@@ -118,46 +123,46 @@ for i = 1:gridx
                     t = linspace(0, 1, numel(inds));
                     xx = spline(t, xd(inds) + noise*(rand(size(inds')) - .5), linspace(0, 1, int_pts*numel(inds)));
                     yy = spline(t, yd(inds) + noise*(rand(size(inds')) - .5), linspace(0, 1, int_pts*numel(inds)));
-                    outx = [outx; xx]; % concatenate new path points to old
-                    outy = [outy; yy];
-                    if plt
-                    figure(2); hold on
-                    plot((i - 1 + (1-canvas)/2)*size(I, 2) + yy*canvas, (j - 1 + (1-canvas)/2)*size(I, 1) + xx*canvas, ...
-                        'k-', 'LineWidth', .0001);
-                    end
+                    outx = [outx; (xscale -xx)/scale]; % concatenate new path points to old
+                    outy = [outy; (yy) /scale];
+                    %                     if plt
+                    % %                     figure(2); hold on
+                    %                     plot((i - 1 + (1-canvas)/2)*size(I, 2) + yy*canvas, (j - 1 + (1-canvas)/2)*size(I, 1) + xx*canvas, ...
+                    %                         'k-', 'LineWidth', .0001);
+                    %                     end
                 end
             end
         end
-        if sig
-        [xs, ys] = signature(.12);
-        xs = canvas*((1 - sa(2)) + xs/max(xs)*sa(2)) + (1 - canvas)/2;
-        ys = (1 - ys/max(ys)*sa(1));
-        outx = [outx; xs]; % concatenate new path points to old
-        outy = [outy; ys]; % concatenate new path points to old
-        if plt
-        figure(2); hold on
-        plot((i - 1)*size(I, 2) + (xs)*size(I, 2), ...
-            (j - 1)*size(I, 1) + (ys)*size(I, 1), ...
-            '-', 'LineWidth', 1, 'Color', sig_color);
-        end
-        end
+%         if sig
+%             [xs, ys] = signature(.12);
+%             xs = canvas*((1 - sa(2)) + xs/max(xs)*sa(2)) + (1 - canvas)/2;
+%             ys = (1 - ys/max(ys)*sa(1));
+%             outx = [outx; xs/maxdim]; % concatenate new path points to old
+%             outy = [outy; ys/maxdim]; % concatenate new path points to old
+% %             if plt
+% %                 %         figure(2);
+% %                 plot((i - 1)*size(I, 2) + (xs)*size(I, 2), ...
+% %                     (j - 1)*size(I, 1) + (ys)*size(I, 1), ...
+% %                     '-', 'LineWidth', 1, 'Color', sig_color);
+% %             end
+%         end
     end
 end
-hold off
+
 
 end
-
-function [xs, ys, x, y] = signature(noise)
-t = linspace(0, 2*pi, 50);
-x = t + .3*exp(-1*t).*cos(40*t + pi);
-y = 2*exp(-3*t) .* ((sin(12*pi*t .*exp(30*t) + pi/2))).^2 + 4*t - 3*t.^2;
-
-assert(numel(x) == numel(y))
-xs = spline(t, x + noise*(rand(size(x)) - .5), linspace(0, 1, 50*numel(x)));
-ys = spline(t, y + noise*(rand(size(x)) - .5), linspace(0, 1, 50*numel(x)));
-xs = xs - min(xs); ys = ys - min(ys);
-xs = xs/max(xs); ys = ys/max(ys);
-end
+% 
+% function [xs, ys, x, y] = signature(noise)
+% t = linspace(0, 2*pi, 50);
+% x = t + .3*exp(-1*t).*cos(40*t + pi);
+% y = 2*exp(-3*t) .* ((sin(12*pi*t .*exp(30*t) + pi/2))).^2 + 4*t - 3*t.^2;
+% 
+% assert(numel(x) == numel(y))
+% xs = spline(t, x + noise*(rand(size(x)) - .5), linspace(0, 1, 50*numel(x)));
+% ys = spline(t, y + noise*(rand(size(x)) - .5), linspace(0, 1, 50*numel(x)));
+% xs = xs - min(xs); ys = ys - min(ys);
+% xs = xs/max(xs); ys = ys/max(ys);
+% end
 
 function [X, Y] = edgeStep(BW, x, y, n)
 len = ceil(nnz(BW)/n); % approx steps
@@ -183,7 +188,6 @@ out = zeros(1, pts);
 for k = 1:pts
     j = vecProb(M(i, :), 1);
     out(k) = j;
-    %     M(j, i) = M(j, i)*decay; M(i, j) = M(i, j)*decay;
     M(:, j) = M(:, j)*decay;
     i = j;
 end
