@@ -1,93 +1,113 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% "Chiaroscuro" still life drawing robot, EECS 206A Final Project, Group 39: Avery Rock
+% "Chiaroscuro" still life drawing robot, EECS 206A Final Project 
+% Group 39: Avery Rock
 % email: avery_rock@berkeley.edu
 % SID: 3034290042
 % Dec. 12, 2019.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+function chiaroscuro
 clear all; close all; clc;
 
-% s = startup_serial(); fopen(s);
-% 
-% % fwrite(s,
+cleanupObj = onCleanup(@cleanMeUp);
 
 %% SYSTEM GEOMETRY
 
 r = [135, 147, 60]; % link lengths, mm
 pen_z = 2*25.4; % length of pen below the top of the end effector, mm
 base_z = 135; % height of origin from table.
-pen_tol = 0; % tolerance for pushing pen deeper onto paper.
-paper_dims = [8*25.4, 12.5*25.4, -3.5*25.4, 3.5*25.4, pen_z - base_z - pen_tol]; % minx, maxx, miny, maxy, z
-travel_z = paper_dims(5) + 20; % height for transit between line segments.
+pen_tol = 7; % tolerance for pushing pen deeper onto paper.
+ws = [5.5*25.4, 12.5*25.4, -2.5*25.4, 2.5*25.4, pen_z - base_z - pen_tol]; % minx, maxx, miny, maxy, z
+travel_z = ws(5) + 15; % height for transit between line segments.
 
 %% OPEN SERIAL COMMUNICATION WITH DOBOT
 
-% s = startup_serial(); fopen(s);
-
-%% START CAMERA, RECORD IMAGE
-try
-    cam = start_cam(); % try to start the camera and record a snapshot
-    I = snapshot(cam);
-catch
-    I = imread('flipped_danny.jpg'); % draw danny devito if an error occurs.
-end
-[x, y, xscale, yscale] = drawme2(I);  % return paths
-
-scale = min(paper_dims(4) - paper_dims(3), paper_dims(2) - paper_dims(1)); % find the more constricting dimension
-minx = paper_dims(1);
-miny = paper_dims(3);
-
-%% PREVIEW DRAWING
-figure(); hold on % display preview of drawing.
-for i = 1:numel(x)
-    plot(x{i}*scale + minx, y{i}*scale + miny, 'k-', 'LineWidth', .01)
-end
-hold off
-axis equal
+s = startup_serial(); fopen(s);
 
 home_payload = {'1F','00','00'}; % homing command
 home_cmd = make_cmd(home_payload);
 fwrite(s, home_cmd)
-pause(20)
+pause(20);
+
+%% START CAMERA, RECORD IMAGE
+
+toPoint(0, -300, 110, s); % go to good point for seeing pedastle
+
+try % if camera is already open this throws an error
+    cam = start_cam(); % try to start the camera and record a snapshot
+end
+I = snapshot(cam);
+
+[x, y, xscale, yscale] = drawme2(I);  % return paths
+
+scale = min((ws(4) - ws(3))/yscale, (ws(2) - ws(1))/xscale); % find the more constricting dimension
+minx = ws(1); maxx = ws(2); miny = ws(3); maxy = ws(4); 
+
+%% PREVIEW DRAWING
+figure(); hold on % display preview of drawing.
+for i = 1:numel(x)
+    plot(y{i}*scale + miny, x{i}*scale + maxx,'k-', 'LineWidth', .1)
+end
+xlabel("Dobot Y Coordinate"); ylabel("Dobot X Coordinate");
+hold off; axis equal
 
 %%
-toPoint(250, 0, 0, s);
+toPoint(180, 0, -20, s);
+pause(5)
 
-%% PTP DRAWING
-for i = 1:numel(x)
-    xx = x{i}*scale + minx; yy = y{i}*scale + miny;
-    pause(1)
-    
-    toPoint(xx(1), yy(1), travel_z, s);
-    for j = 1:numel(x{i})
-        toPoint(xx(j), yy(j), paper_dims(5), s);
-        pause(.01)
+%%
+if checkForPaper(cam)
+
+    for i = 1:numel(x) % PTP DRAWING
+        xx = x{i}*scale + maxx; yy = -y{i}*scale + maxy;
+        pause(1)
+        
+        toPoint(xx(1), yy(1), travel_z, s);
+        for j = 1:numel(x{i})
+            toPoint(xx(j), yy(j), ws(5), s);
+            pause(.05)
+        end
+        
+        toPoint(xx(j), yy(j), travel_z, s); % pick back up
+        pause(.5)
     end
     
-    toPoint(xx(j), yy(j), travel_z, s); % pick back up
-    pause(.2)
+    toPoint(r(2) + r(3), 0, r(1), s); % perfectly upright
+    
+    %% CP DRAWING
+%     for i = 1:numel(x)
+%         xx = x{i}*scale + maxx; yy = y{i}*scale + miny;
+%         CP_queue(xx(1), yy(1), travel_z, s);
+%         for j = 1:numel(x{i})
+%             CP_queue(xx(j), yy(j), ws(5), s);
+%         end
+%     
+%         CP_queue(xx(j), yy(j), travel_z, s); % pick back up
+%     end
+    
+%     toPoint(r(2) + r(3), 0, r(1), s); % perfectly upright
+else
+    fprintf("No paper detected. Shutting down safely...")
 end
 
-toPoint(r(2) + r(3), 0, r(1), s); % perfectly upright
-
-
-%% CP DRAWING
-
-% set CP velocity and acceleration
-
-
-
-%% SHUT DOWN
-toPoint(100, 0, 0, s)
-fclose(s);
-
-%%
 
 function cam = start_cam()
-cam = webcam(2);
+cam = webcam(1);
 preview(cam); pause(1)
+end
+
+function out = checkForPaper(cam)
+out = 0;
+I = snapshot(cam); % take a picture once
+I = rgb2gray(I); % convert to black and white
+[h, w] = size(I);
+light = I > mean(I(:)); % array of lighter-than-average pixels
+midblock = light(ceil(h/3):end, floor(w/5):ceil(4*w/5));
+nnz(midblock)/numel(midblock); 
+if nnz(midblock)/numel(midblock) > .9 % if more than 90% of the pixels in the region where the paper should be are light, go ahead.
+    out = 1;
+end
 end
 
 function s = startup_serial()
@@ -98,9 +118,7 @@ if ~isempty(instrfind) % clear away old gunk
 end
 
 serial_devices = seriallist; % find all serial devices
-% s = serial(serial_devices(1)); % windows syntax
-sprintf(serial_devices(3));
-s = serial(serial_devices(3), 'BaudRate', 115200); % connect to the last one (verify this in general)
+s = serial(serial_devices(4), 'BaudRate', 115200); % connect to the last one (verify this in general)
 s.Terminator = '';
 end
 
@@ -112,12 +130,10 @@ fwrite(s, PTP_cmd);
 end
 
 function payload = SetCPParams_payload(Acc, Vel, period)
-
 id = {'90'};
 rwq = {'11'};
-params = hexcoords([Acc, Vel, period]);
+params = hexcoord([Acc, Vel, period]);
 mode = {'01'}; % real time: 1
-
 payload = [id, rwq, params, mode];
 end
 
@@ -129,30 +145,21 @@ end
 
 function payload = CP_payload(x, y, z)
 id = {'91'};
-rwq = {'11'};
+rwq = {'03'};
 mode = {'01'}; % 1: absolute. 0: relative
 vel = 100; % velocity units???
-params = hexcoords(x, y, z, vel);
+params = hexcoord([x, y, z, 1]);
 payload = [id, rwq, mode, params];
 end
 
-function checkQueue(s)
+function out = checkQueue(s)
 id = {hex2dec(246)};
 rwq = {'00'};
 payload = [id, rwq];
 cmd = make_cmd(payload);
-returned = fread(s, 3 + 2 + 8); % read the returned command packet
-end
-
-function STOP(s)
-id = {dec2hex(242)};
-rwq = {'10'};
-payload = [id, rwq];
-cmd = make_cmd(payload);
 fwrite(s, cmd);
-fprintf("Command queue forcibly stopped");
+out = fread(s, 3 + 2 + 8); % read the returned command packet
 end
-
 
 function payload = PTP_payload(x, y, z)
 id = {'54'};
@@ -240,20 +247,28 @@ end
 
 % function float7542dec(b)
 % s = b(1); e = b(2:9) - 127; m = b(10:end);
-% 
+%
 % mantissa = 1;
-% 
+% f
 % for
-%     
+%
 %     out = ((-1)^s)*(2^e) *
-%     
+%
 % end
 % end
 
-    function out = getPose(s)
-        payload = getPose_payload();
-        getPose_cmd = make_cmd(payload);
-        fwrite(s, getPose_cmd);
-        pose = fread(s, 3 + 34);
-        out = pose; % need to invert the float thing to get actual numbers out of this: doable
-    end
+function out = getPose(s)
+payload = getPose_payload();
+getPose_cmd = make_cmd(payload);
+fwrite(s, getPose_cmd);
+pose = fread(s, 3 + 34);
+out = pose; % need to invert the float thing to get actual numbers out of this: doable
+end
+
+function cleanMeUp()
+fprintf('Shutting down...');
+STOP(s)
+fclose(s);
+end
+
+end

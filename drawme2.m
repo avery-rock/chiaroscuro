@@ -1,35 +1,34 @@
 % close all; clear all; clc;
-function [outx, outy] = drawme2(I)
+function [outx, outy, xscale, yscale] = drawme2(I)
 
-outx = {}; outy = {};
-plt = 1;
+outx = {}; outy = {}; % initialize empty cell arrays for line segments.
+plt = 1; sig = 0; 
 
 % PARAMETERS
-imsize = 500; 
+imsize = 500; % maximum pixel dimensions of image
 int_pts = 2;
 shading_visits = 1;
-markov_decay = .7;
-gridx = 1;
-gridy = 1;
-noise = 5;
-dec = 50000/imsize;
-edr = 2;
-ddr = 15;
+markov_decay = .6;
+noise = imsize/100; % 1% error to points.
+% dec = 50000/imsize;
+sigma = imsize*5e-10; 
+edr = 1; % number of edge copies to draw (2 recommended)
+ddr = 3;
+des_space = 1e-2; 
+dec = 30; 
 
-edge_step = imsize/50;
-pix_const = 10;
-dark_bins = [.1 .2 .4 .7];
+edge_step = imsize/100;
+pix_const = 5;
+dark_bins = [.1 .4];
 shading_densities = (1 - dark_bins + min(dark_bins)).^2; shading_densities = shading_densities / max(shading_densities);
-canny_size = 1;
-
+canny_size = imsize/100;
 % canvas = 1;
 % sa = [(1 - canvas)/3, .25]; % signature area
-% sig_color = [0 0 0];
 
-% LOAD IMAGE
-I = imresize(I, imsize/size(I, 1)); 
-xscale = size(I, 2); yscale = size(I, 1); scale = max(xscale, yscale); 
-I = double(rgb2gray(I));
+% RESIZE AND NORMALIZE IMAGE
+I = imresize(I, imsize/size(I, 1)); A = I; 
+xscale = size(I, 1); yscale = size(I, 2); scale = max(xscale, yscale);
+I = double(rgb2gray(I)); 
 I = (I)/(max(I(:)) - min(I(:)));
 
 % EDGE DETECTION
@@ -71,98 +70,68 @@ end
 
 %% represent image processing
 if plt
-figure(); hold on
-subplot(1, 3, 1)
-imshow(I/255); title("Input Image")
-subplot(1, 3, 2)
-imshow(BWs); title("Edges");
-subplot(1, 3, 3)
-imshow(double(imq)/max(imq(:))); title("Posterized Image");
+    figure(); hold on
+    subplot(1, 3, 1)
+    imshow(A); title("Input Image")
+    subplot(1, 3, 2)
+    imshow(BWs); title("Edges");
+    subplot(1, 3, 3)
+    imshow(double(imq)/max(imq(:))); title("Posterized Image");
+    hold off
 end
-hold off
 %%
-if plt
-figure(); hold on
-set(gca, 'Ydir', 'reverse'); set(gca, 'YAxisLocation', 'Right')
-set(gca, 'visible', 'off', 'xtick', []); axis equal off
-% imshow(ones(gridy*size(I, 1), gridx*size(I, 2)));
-end
-for i = 1:gridx
-    for j = 1:gridy
-        for e = 1:size(edges, 1)
-            xe = edges{e, 1}; ye = edges{e, 2};
-            if numel(xe) >= 2
-                t = linspace(0, 1, numel(xe));
-                for dr = 1:edr
-                    xx = spline(t, xe + noise*(rand(size(xe)) - .5), linspace(0, 1, int_pts*numel(xe)));
-                    yy = spline(t, ye + noise*(rand(size(ye)) - .5), linspace(0, 1, int_pts*numel(xe)));
-                    
-                    outx = [outx; (xscale -xx)/scale]; % concatenate new path points to old
-                    outy = [outy; (yy) /scale];
-                    
-                    %                 if plt
-                    % %                 figure(2); hold on
-                    %                 plot((i - 1 + (1-canvas)/2)*size(I, 2) + yy*canvas, (j - 1 + (1-canvas)/2)*size(I, 1) + xx*canvas, ...
-                    %                     'k-', 'LineWidth', .0001);
-                    %                 hold on
-                    %                 end
-                end
-            end
+
+for e = 1:size(edges, 1)
+    xe = edges{e, 1}; ye = edges{e, 2};
+    if numel(xe) >= 2
+        t = linspace(0, 1, numel(xe));
+        for dr = 1:edr
+            xx = spline(t, xe + noise*(rand(size(xe)) - .5), linspace(0, 1, int_pts*numel(xe)));
+            yy = spline(t, ye + noise*(rand(size(ye)) - .5), linspace(0, 1, int_pts*numel(xe)));
+            outx = [outx; (-xx)/scale]; % concatenate new path points to old
+            outy = [outy; (yy)/scale];     
         end
-        for d = 1:size(darks, 1)
-            xd = darks{d, 1};
-            yd = darks{d, 2};
-            if numel(xd) > 2
-                X = permute([xd, yd], [1, 3, 2]);
-                D = vecnorm(X - permute(X, [2, 1, 3]), 2, 3);
-                D = D/max(D(:)); % normalized distances between points
-                P = exp(-D*dec);
-                P(eye(size(P)) == 1) = 0;
-                for dr = 1:ddr
-                    [inds, P] = markov(P, randi([1, numel(xd)]), shading_visits * numel(xd), markov_decay);
-                    t = linspace(0, 1, numel(inds));
-                    xx = spline(t, xd(inds) + noise*(rand(size(inds')) - .5), linspace(0, 1, int_pts*numel(inds)));
-                    yy = spline(t, yd(inds) + noise*(rand(size(inds')) - .5), linspace(0, 1, int_pts*numel(inds)));
-                    outx = [outx; (xscale -xx)/scale]; % concatenate new path points to old
-                    outy = [outy; (yy) /scale];
-                    %                     if plt
-                    % %                     figure(2); hold on
-                    %                     plot((i - 1 + (1-canvas)/2)*size(I, 2) + yy*canvas, (j - 1 + (1-canvas)/2)*size(I, 1) + xx*canvas, ...
-                    %                         'k-', 'LineWidth', .0001);
-                    %                     end
-                end
-            end
-        end
-%         if sig
-%             [xs, ys] = signature(.12);
-%             xs = canvas*((1 - sa(2)) + xs/max(xs)*sa(2)) + (1 - canvas)/2;
-%             ys = (1 - ys/max(ys)*sa(1));
-%             outx = [outx; xs/maxdim]; % concatenate new path points to old
-%             outy = [outy; ys/maxdim]; % concatenate new path points to old
-% %             if plt
-% %                 %         figure(2);
-% %                 plot((i - 1)*size(I, 2) + (xs)*size(I, 2), ...
-% %                     (j - 1)*size(I, 1) + (ys)*size(I, 1), ...
-% %                     '-', 'LineWidth', 1, 'Color', sig_color);
-% %             end
-%         end
     end
 end
 
+% COMPUTE PROBABILITIES
+for d = 1:size(darks, 1)
+    xd = darks{d, 1};
+    yd = darks{d, 2};
+    if numel(xd) > 100
+        X = permute([xd, yd], [1, 3, 2]);
+        D = vecnorm(X - permute(X, [2, 1, 3]), 2, 3); 
+        D = D/max(D(:)); % normalized distances between points
+        P = exp(-D*dec);
+        P(eye(size(P)) == 1) = 0;
+%         P(eye(size(P)) == 1) = 0
+        for dr = 1:ddr
+            [inds, P] = markov(P, randi([1, numel(xd)]), shading_visits * numel(xd), markov_decay);
+            t = linspace(0, 1, numel(inds));
+            xx = spline(t, xd(inds) + noise*(rand(size(inds')) - .5), linspace(0, 1, int_pts*numel(inds)));
+            yy = spline(t, yd(inds) + noise*(rand(size(inds')) - .5), linspace(0, 1, int_pts*numel(inds)));
+            outx = [outx; (-xx)/scale]; % concatenate new path points to old
+            outy = [outy; (yy)/scale];  
+        end
+    end
+end
+% if sig % add signature
+%     [xs, ys] = signature(.12);
+%     xs = canvas*((1 - sa(2)) + xs/max(xs)*sa(2)) + (1 - canvas)/2;
+%     ys = (1 - ys/max(ys)*sa(1));
+%     outx = [outx; (xs - xscale)/scale]; % concatenate new path points to old
+%     outy = [outy; (ys) /scale];
+% end
+
+for i = numel(outx):-1:1
+    if numel(outx{i}) < 8
+        outx(i) = []; outy(i) = []; 
+    end
+end
+
+xscale = xscale / scale; yscale = yscale / scale; % normalize scales for return
 
 end
-% 
-% function [xs, ys, x, y] = signature(noise)
-% t = linspace(0, 2*pi, 50);
-% x = t + .3*exp(-1*t).*cos(40*t + pi);
-% y = 2*exp(-3*t) .* ((sin(12*pi*t .*exp(30*t) + pi/2))).^2 + 4*t - 3*t.^2;
-% 
-% assert(numel(x) == numel(y))
-% xs = spline(t, x + noise*(rand(size(x)) - .5), linspace(0, 1, 50*numel(x)));
-% ys = spline(t, y + noise*(rand(size(x)) - .5), linspace(0, 1, 50*numel(x)));
-% xs = xs - min(xs); ys = ys - min(ys);
-% xs = xs/max(xs); ys = ys/max(ys);
-% end
 
 function [X, Y] = edgeStep(BW, x, y, n)
 len = ceil(nnz(BW)/n); % approx steps
@@ -191,4 +160,16 @@ for k = 1:pts
     M(:, j) = M(:, j)*decay;
     i = j;
 end
+end
+
+function [xs, ys, x, y] = signature(noise)
+t = linspace(0, 2*pi, 50);
+x = t + .3*exp(-1*t).*cos(40*t + pi);
+y = 2*exp(-3*t) .* ((sin(12*pi*t .*exp(30*t) + pi/2))).^2 + 4*t - 3*t.^2;
+
+assert(numel(x) == numel(y))
+xs = spline(t, x + noise*(rand(size(x)) - .5), linspace(0, 1, 50*numel(x)));
+ys = spline(t, y + noise*(rand(size(x)) - .5), linspace(0, 1, 50*numel(x)));
+xs = xs - min(xs); ys = ys - min(ys);
+xs = xs/max(xs); ys = ys/max(ys);
 end
