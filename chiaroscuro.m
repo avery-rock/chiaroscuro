@@ -8,40 +8,45 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function chiaroscuro
+
 clear all; close all; clc;
 
-cleanupObj = onCleanup(@cleanMeUp);
-global s
+global s % make the serial connection object global
+
+cleanupObj = onCleanup(@cleanMeUp); % define shutdown sequence
 
 %% SYSTEM GEOMETRY
 
 r = [135, 147, 60]; % link lengths, mm
 pen_z = 2*25.4; % length of pen below the top of the end effector, mm
 base_z = 135; % height of origin from table.
-pen_tol = -10; % tolerance for pushing pen deeper onto paper.
-ws = [5.5*25.4, 12.5*25.4, -2.5*25.4, 2.5*25.4, pen_z - base_z - pen_tol]; % minx, maxx, miny, maxy, z
+pen_tol = 4; % tolerance for pushing pen deeper onto paper.
+ws = [5.5*25.4, 12*25.4, -2.5*25.4, 2.5*25.4, pen_z - base_z - pen_tol]; % minx, maxx, miny, maxy, z
 travel_z = ws(5) + 15; % height for transit between line segments.
 
-%% OPEN SERIAL COMMUNICATION WITH DOBOT
-
-s = startup_serial(); fopen(s);
-
-home_payload = {'1F','00','00'}; % homing command
-home_cmd = make_cmd(home_payload);
-fwrite(s, home_cmd)
-pause(20);
-
-%% START CAMERA, RECORD IMAGE
-
-toPoint(0, -300, 110, s); % go to good point for seeing pedastle
-
-try % if camera is already open this throws an error
-    cam = start_cam(); % try to start the camera and record a snapshot
+%% OPEN COMMUNICATION
+try
+    s = startup_serial(); fopen(s); % open serial communication with dobot
+    home_payload = {'1F','00','00'}; % define homing command payload
+    home_cmd = make_cmd(home_payload); % convert to homing command
+    fwrite(s, home_cmd) % write command to dobot
+    pause(20); % wait for homing to complete. 
+    
+    toPoint(0, -300, 110, s); % go to good point for seeing pedastle
+    pause(5)
+    
+    try
+        cam = start_cam(); % try to start the camera and record a snapshot
+    catch
+        fprintf("cam already define \n\n")
+    end
+    I = snapshot(cam); % record single shot of camera
+catch
+    I = imread("dannydevito.jpg"); % if robot or camera throws an error, draw danny devito. 
 end
-I = snapshot(cam);
 
-[x, y, xscale, yscale] = drawme2(I);  % return paths
-
+%% PLAN DRAWING
+[x, y, xscale, yscale] = drawme2(I);  % return line drawing paths and scale
 scale = min((ws(4) - ws(3))/yscale, (ws(2) - ws(1))/xscale); % find the more constricting dimension
 minx = ws(1); maxx = ws(2); miny = ws(3); maxy = ws(4);
 
@@ -53,33 +58,27 @@ end
 xlabel("Dobot Y Coordinate"); ylabel("Dobot X Coordinate");
 hold off; axis equal
 
-%%
-toPoint(180, 0, -20, s);
-pause(5)
-
-%%
-if checkForPaper(cam)
+%% CREATE DRAWING
+try
+    toPoint(180, 0, -20, s); % move to central location to check for paper
+    pause(5)
     
-    for i = 1:numel(x) % PTP DRAWING
-        xx = x{i}*scale + maxx; yy = -y{i}*scale + maxy;
-        pause(1)
-        
-        toPoint(xx(1), yy(1), travel_z, s);
-        for j = 1:numel(xx)
-            disp(j)
-            disp(numel(xx))
-            toPoint(xx(j), yy(j), ws(5), s);
-            pause(.05)
+    if checkForPaper(cam)
+        for i = 1:numel(x) % PTP DRAWING
+            xx = x{i}*scale + maxx; yy = -y{i}*scale + maxy;
+            pause(1)
+            toPoint(xx(1), yy(1), travel_z, s);
+            for j = 1:numel(xx)
+                toPoint(xx(j), yy(j), ws(5), s);
+                pause(.1)
+            end
+            toPoint(xx(j), yy(j), travel_z, s); % pick back up
+            pause(1)
         end
-        
-        toPoint(xx(j), yy(j), travel_z, s); % pick back up
-        pause(.5)
+    else
+        fprintf("No paper detected. Shutting down safely...\n\n")
     end
-    
-else
-    fprintf("No paper detected. Shutting down safely...")
 end
-toPoint(r(2) + r(3), 0, r(1), s); % perfectly upright
 
     function cam = start_cam()
         cam = webcam(2);
@@ -188,8 +187,6 @@ toPoint(r(2) + r(3), 0, r(1), s); % perfectly upright
     function s = hexfloat(d)
         % this function converts a number d into a 4-byte float in IEEE-754 little
         % endian notation for use with dobot serial communication.
-        
-        % it's literally just easier to reconstruct it manually??
         % https://www.h-schmidt.net/FloatConverter/IEEE754.html
         
         b = false(1, 32); % empty binary array
@@ -233,19 +230,6 @@ toPoint(r(2) + r(3), 0, r(1), s); % perfectly upright
         out = [id, rwq];
     end
 
-% function float7542dec(b)
-% s = b(1); e = b(2:9) - 127; m = b(10:end);
-%
-% mantissa = 1;
-% f
-% for
-%
-%     out = ((-1)^s)*(2^e) *
-%
-% end
-% end
-
-
     function out = getPose(s)
         payload = getPose_payload();
         getPose_cmd = make_cmd(payload);
@@ -255,15 +239,14 @@ toPoint(r(2) + r(3), 0, r(1), s); % perfectly upright
     end
 
     function STOP()
-        payload = {'242', '10'};
+        payload = {'FD', '10'};
         cmd = make_cmd(payload);
         fwrite(s, cmd);
     end
 
     function cleanMeUp()
-        fprintf('Shutting down...');
-        STOP();
+        toPoint(r(2) + r(3), 0, r(1), s); % perfectly upright
+        fprintf('Shutting down...\n\n');
         fclose(s);
     end
-
 end
