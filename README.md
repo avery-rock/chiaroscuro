@@ -7,4 +7,4 @@ Patrick Tresset's website provides no information that I could find about the al
 
 Tresset has other, better-documented work that was only found late in the process of developing this project. The technical details were not used in developing my work. The image processing techniques used are qualitatively very similar to the methods I found worked well but are, naturally, far more refined. The work presented in papers [like this](https://www.sciencedirect.com/science/article/pii/S0097849313000149) will offer an avenue for further improving the planning and processing steps if I work on this project further after this semester. 
 
-![Patrick Tresset's *Human Study #2, La Vanité*, adapted from http://patricktresset.com/new/project/human-study-2-la-vanite/](images/vanite)
+![Patrick Tresset's *Human Study #2, La Vanité*, adapted from http://patricktresset.com/new/project/human-study-2-la-vanite/](images/output_images/self_portraits.png)
