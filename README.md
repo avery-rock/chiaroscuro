@@ -1,37 +1,8 @@
-## Welcome to GitHub Pages
+This project was inspired by Patrick Tresset's [*Human Study #2, La Vanité*](http://patricktresset.com/new/project/human-study-2-la-vanite/), an artistic installation piece that places several skeletally simple robots at old fashioned wooden desks while they produce scribbly sketches of whatever is placed in front of them. This piece has several key features that make not only its output but also its process fascinating. 
+1. The robots never draw the same way twice. The planning process is somewhat random. 
+2. The robots use both edges and shading information. Too many vision systems focus only on edges because they are easy to characterize and render with line drawings. Using line drawings to make shading pushes this piece a step further than other projects. 
+3. Scribbly, chaotic motion. 
 
-You can use the [editor on GitHub](https://github.com/avery-rock/chiaroscuro/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+Patrick Tresset's website provides no information that I could find about the algorithms behind his drawings, which are a foundational trade secret of his work. I experimented with a variety of ways to take RGB images and convert them into recognizeable but *artistic* line drawings. While my final style presented in this project does not perfectly recreate the effect of Tresset's work, it produces work at the same uncanny intersection of mechanical precision and sketchy freewheeling that Tresset's does. 
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
 
-### Markdown
-
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/avery-rock/chiaroscuro/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
