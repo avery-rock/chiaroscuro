@@ -37,27 +37,23 @@
           <p>{{ site.description | default: site.github.project_tagline }}</p>
           <hr>
           <span class="credits left">Project maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a></span>
-          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+<!--           <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span> -->
         </div>
 
         {{ content }}
 
       </section>
-
-    </div>
-    
-    
-    <header>
-    <nav>
-        <ul>
-            <button><a href="{{site.baseurl}}/">Home</a></button>
-            <button><a href="{{site.baseurl}}/implementation">Implementation</a></button>
-            <button><a href="{{site.baseurl}}/Gallery">Gallery</a></button>
-        </ul>
-    </nav>
-    <a class="title-a" href="{{site.baseurl}}/"><h1 class="title">{{site.title}}</h1></a>
-</header>
       
+      <header>
+    <nav>
+            <button style="background-color:gray; border-color:olivedrab; color:white"><a href="{{site.baseurl}}/">Home</a></button>
+            <button style="background-color:gray; border-color:olivedrab; color:white"><a href="{{site.baseurl}}/"><a href="{{site.baseurl}}/implementation">Implementation</a></button>
+            <button style="background-color:gray; border-color:olivedrab; color:white"><a href="{{site.baseurl}}/"><a href="{{site.baseurl}}/Gallery">Gallery</a></button>
+    </nav>
+<!--     <a class="title-a" href="{{site.baseurl}}/"><h1 class="title">{{site.title}}</h1></a> -->
+</header>
+
+    </div>  
   
 <!--   {{ content }} -->
 
