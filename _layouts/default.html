@@ -45,6 +45,28 @@
       </section>
 
     </div>
+    
+    
+    <header>
+    <nav>
+        <ul>
+            <li><a href="{{site.baseurl}}/">Home</a></li>
+            <li><a href="{{site.baseurl}}/implementation">Implementation</a></li>
+            <li><a href="{{site.baseurl}}/Gallery">Gallery</a></li>
+        </ul>
+    </nav>
+    <a class="title-a" href="{{site.baseurl}}/"><h1 class="title">{{site.title}}</h1></a>
+</header>
+      
+  
+  {{ content }}
+
+
+<footer>
+    <p><small>Copyrights &copy; {{site.time | date: '%Y'}} {{site.title}}</small></p>
+    <p><small>&nbsp;&#124;&nbsp;Built with <span>❤</span> by <a href="http://webjeda.com">webjeda</a></small></p>
+</footer>
+    
 
     {% if site.google_analytics %}
       <script>
