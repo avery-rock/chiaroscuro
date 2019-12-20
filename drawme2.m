@@ -10,17 +10,17 @@ int_pts = 2; % intermediate points for splines
 noise = 1*(imsize/100); % percent error to points.
 
 % SHADING PARAMATERS
-shading_drawings = 3; % number of times to repeat drawings
+shading_drawings = 5; % number of times to repeat drawings
 shading_visits = 1; % multiple of the number of total points in a sample to visit during a single drawing
 markov_decay = .6; % factor for decreasing loop duration
 dec = 30; % exponential rate for random walk probabilities. 0 = uniform. 
 pix_const = 3; % scaling factor for subsampling. Higher values sample more points
-dark_bins = [.1 .4]; % threshold values for posterization
+dark_bins = [.25 .4 .55 ]; % threshold values for posterization
 shading_densities = (1 - dark_bins).^2; shading_densities = shading_densities / max(shading_densities);
 
 % EDGE PARAMETERS
-edge_drawings = 1; % number of edge copies to draw (2 recommended)
-edge_step = imsize/100; % pixels between waypoints on edges. 
+edge_drawings = 2; % number of edge copies to draw (2 recommended)
+edge_step = imsize/25; % pixels between waypoints on edges. 
 canny_size = imsize/100;
 
 % SIGNATURE PARAMETERS
@@ -171,11 +171,15 @@ for k = 1:pts
     M(:, j) = M(:, j)*decay;
     i = j;
 end
-
 end
 
-function [xs, ys, x, y] = signature(noise)
-% Makes a signature path for Chiaroscuro
-
-
+function i = vecProb(p, m)
+% selects a random index of an array p, with probability density determined
+% by the values contained in p. Assumes non-negative values. returns a 1 x
+% m array
+p = p + eps; 
+p = p(:)/sum(p(:)); 
+s = cumsum(p); 
+n = rand(1, m); 
+i = numel(p) + 1 - sum(s > n, 1)'; 
 end

@@ -9,11 +9,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function chiaroscuro
 
-clear all; close all; clc;
+% clear all; close all; clc;
 
-global s % make the serial connection object global
+% global s % make the serial connection object global
 
-cleanupObj = onCleanup(@cleanMeUp); % define shutdown sequence
+cleanupObj = onCleanup(@(s)cleanMeUp); % define shutdown sequence
 
 %% SYSTEM GEOMETRY
 
@@ -21,7 +21,7 @@ r = [135, 147, 60]; % link lengths, mm
 pen_z = 2*25.4; % length of pen below the top of the end effector, mm
 base_z = 135; % height of origin from table.
 pen_tol = 4; % tolerance for pushing pen deeper onto paper.
-ws = [5.5*25.4, 12*25.4, -2.5*25.4, 2.5*25.4, pen_z - base_z - pen_tol]; % minx, maxx, miny, maxy, z
+ws = [8*25.4, 11.5*25.4, -4.5*25.4, 4.5*25.4, pen_z - base_z - pen_tol]; % minx, maxx, miny, maxy, z
 travel_z = ws(5) + 15; % height for transit between line segments.
 
 %% OPEN COMMUNICATION
@@ -30,9 +30,9 @@ try
     home_payload = {'1F','00','00'}; % define homing command payload
     home_cmd = make_cmd(home_payload); % convert to homing command
     fwrite(s, home_cmd) % write command to dobot
-    pause(20); % wait for homing to complete. 
+    pause(20); % wait for homing to complete.
     
-    toPoint(0, -300, 110, s); % go to good point for seeing pedastle
+    toPoint(0, 300, 110, s); % go to good point for seeing pedastle
     pause(5)
     
     try
@@ -42,7 +42,7 @@ try
     end
     I = snapshot(cam); % record single shot of camera
 catch
-    I = imread("dannydevito.jpg"); % if robot or camera throws an error, draw danny devito. 
+    I = imread("dannydevito.jpg"); % if robot or camera throws an error, draw danny devito.
 end
 
 %% PLAN DRAWING
@@ -63,7 +63,7 @@ try
     toPoint(180, 0, -20, s); % move to central location to check for paper
     pause(5)
     
-    if checkForPaper(cam)
+    if 1 || checkForPaper(cam)
         for i = 1:numel(x) % PTP DRAWING
             xx = x{i}*scale + maxx; yy = -y{i}*scale + maxy;
             pause(1)
@@ -75,6 +75,8 @@ try
             toPoint(xx(j), yy(j), travel_z, s); % pick back up
             pause(1)
         end
+        toPoint(r(2) + r(3), 0, r(1), s); % perfectly upright
+        
     else
         fprintf("No paper detected. Shutting down safely...\n\n")
     end
@@ -238,15 +240,17 @@ end
         out = pose; % need to invert the float thing to get actual numbers out of this: doable
     end
 
-    function STOP()
-        payload = {'FD', '10'};
-        cmd = make_cmd(payload);
-        fwrite(s, cmd);
-    end
+%     function STOP()
+%         payload = {'FD', '10'};
+%         cmd = make_cmd(payload);
+%         fwrite(s, cmd);
+%     end
 
-    function cleanMeUp()
+    function cleanMeUp(s)
         toPoint(r(2) + r(3), 0, r(1), s); % perfectly upright
         fprintf('Shutting down...\n\n');
+        pause(5)
         fclose(s);
+        clear all; close all; clc
     end
 end
