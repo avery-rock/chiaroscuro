@@ -5,4 +5,4 @@ This project was inspired by Patrick Tresset's [*Human Study #2, La Vanité*](ht
 
 Patrick Tresset's website provides no information that I could find about the algorithms behind his drawings, which are a foundational trade secret of his work. I experimented with a variety of ways to take RGB images and convert them into recognizeable but *artistic* line drawings. While my final style presented in this project does not perfectly recreate the effect of Tresset's work, it produces work at the same uncanny intersection of mechanical precision and sketchy freewheeling that Tresset's does. 
 
-
+![Patrick Tresset's *Human Study #2, La Vanité*, adapted from http://patricktresset.com/new/project/human-study-2-la-vanite/](images/tresset)
