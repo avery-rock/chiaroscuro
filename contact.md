@@ -1,4 +1,4 @@
-<img src="images/avery.png" width="400">
+<img alt = "Avery" src="images/avery.png" width="400" class="center">
 
 Avery Rock is a second-year MS/PhD student studying Mechanical Engineering at UC Berkeley. 
 
