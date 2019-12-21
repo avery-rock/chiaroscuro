@@ -18,8 +18,8 @@ In order to mimic the disorderly shading style of Tresset's work, the algorithm 
 
 To create the shading plan, the algorithm segments a black and white version of the input image into contigous clusters of thresholded darkness values. It then randomly selected a subset of pixels from this cluster and uses the distance between them in the original image to compute a probability of jumping from one node to each other node. Without modification, this generally creates small loops since there are generally sets of pixels within each cluster that are relatively close to each other. To break out of loops and create a more uniform drawing, the algorithm does two things: 
 
-- 1. Decreases the odds of returning to each point it visits by a constant factor. 
-- 2. Starts several random walks from random initial points. 
+- Decreases the odds of returning to each point it visits by a constant factor. 
+- Starts several random walks from random initial points. 
 
 If you want to see more details of how this was implemented, please rummage through the code. The core of this algorithm grew by trial and error in the wee hours of the morning over the first weeks of November. 
 
@@ -31,7 +31,9 @@ The combination of these steps usually fills in most of each cluster while still
 
 ![workspace](images/dobot_workspace.png)
 
-Currently, the robot is hard-coded with the location and size of the paper in its workspace. Once the drawing planning is complete, the planned path is scaled to the maximum size that can fit in the workspace (without changing its aspect ratio) and drawn in the upper left hand corner. The only area of the workspace where a drawing of reasonable size can be made is directly in front of the robot. A more general version of this program could search the available workspace for a valid piece of paper to draw on, but for this project it was sufficient to check the one valid location. It does this by pointing the camera where it expects the paper to be and verifying that more than 90% of the pixels in the lower central region are lighter than the average pixel in the image. Placing the robot onto a light surface does NOT register as a piece of paper, and the paper must be fairly precisely aligned to be accepted. 
+Currently, the robot is hard-coded with the location and size of the paper in its workspace. Once the drawing planning is complete, the planned path is scaled to the maximum size that can fit in the workspace (without changing its aspect ratio) and drawn in the upper left hand corner. The only area of the workspace where a drawing of reasonable size can be made is directly in front of the robot. The entirety of a standard 8.5"x11" piece of paper cannot fit into the accessible workspace anywhere, and the available space is further reduced because the center of the workspace is approximately 120mm *above* the table. Using a long pen slightly helps with this but a reasonable working limit of 300 mm radius was used for this project. 
+
+A more general version of this program could search the available workspace for a valid piece of paper to draw on, but for this project it was sufficient to check the one valid location. It does this by pointing the camera where it expects the paper to be and verifying that more than 90% of the pixels in the lower central region are lighter than the average pixel in the image. Placing the robot onto a light surface does NOT register as a piece of paper, and the paper must be fairly precisely aligned to be accepted. 
 
 ## Robot Controller
 
@@ -39,7 +41,7 @@ Dobot provides support for several common platforms including ROS, C and Matlab.
 
 The current code is not asyncronous as a result of this implementation and sends a series of point-to-point translation commands based on the drawing plan. 
 
-While slow, the point-to-point control method used currently reliably recreates planned drawings. 
+While slow, the point-to-point control method used currently reliably recreates planned drawings. The gains from continuous trajectories would be large for the edge drawing portion of the sketches but relatively small for the shading since the robot has to change directions all the time. 
 
 ![Planned path from Danny Devito picture](images/danny_plan.png)
 
