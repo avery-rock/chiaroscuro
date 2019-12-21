@@ -1,3 +1,6 @@
+![Simulated robot portraits](images/output_images/self_portraits.png)
+
+
 - Q: Why teapots and Danny Devito? 
   - A: Why *not*. 
 - Q: Why are the drawings so weird? 
