@@ -37,17 +37,21 @@
           <p>{{ site.description | default: site.github.project_tagline }}</p>
           
 <!--                 <header> -->
-    <nav>
-            <button class="fork"><a href="{{site.baseurl}}/">Home</a></button>
-            <button style="background-color:gray; border-color:olivedrab; color:white"><a href="{{site.baseurl}}/"><a href="{{site.baseurl}}/implementation">Implementation</a></button>
-            <button style="background-color:gray; border-color:olivedrab; color:white"><a href="{{site.baseurl}}/"><a href="{{site.baseurl}}/Gallery">Gallery</a></button>
-    </nav>
+
 <!--     <a class="title-a" href="{{site.baseurl}}/"><h1 class="title">{{site.title}}</h1></a> -->
 <!-- </header> -->
-          <hr>
-          <span class="credits left">Project maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a></span>
+<!--           <hr> -->
+<!--           <span class="credits left">Project maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a></span> -->
 <!--           <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span> -->
         </div>
+        
+    <nav style="text-align: center">
+            <button style="background-color: dimgray; border-color: white; color: white; border-radius: 8px; padding: 12px"><a href="{{site.baseurl}}/">Home</a></button>
+            <button style="background-color: dimgray; border-color: white; color: white; border-radius: 8px; padding: 12px"><a href="{{site.baseurl}}/"><a href="{{site.baseurl}}/Gallery">Gallery</a></button>
+            <button style="background-color: dimgray; border-color: white; color: white; border-radius: 8px; padding: 12px"><a href="{{site.baseurl}}/"><a href="{{site.baseurl}}/implementation">Implementation</a></button>
+            <button style="background-color: dimgray; border-color: white; color: white; border-radius: 8px; padding: 12px"><a href="{{site.baseurl}}/"><a href="{{site.baseurl}}/faq">FAQ</a></button>
+            <button style="background-color: dimgray; border-color: white; color: white; border-radius: 8px; padding: 12px"><a href="{{site.baseurl}}/"><a href="{{site.baseurl}}/contact">Creator</a></button>
+    </nav>
 
         {{ content }}
 
