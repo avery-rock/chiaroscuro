@@ -1,8 +1,10 @@
+## Overall Workflow
+
 ![workflow](images/workflow.png)
 
 ## Hardware
 
-This project uses a [Dobot Magician] arm with a [logitech C920s webcam]. The webcam is mounted to the send link of the robot to allow the same camera to be used to check for a paper in the workspace and look in any direction instructed for the scene to draw. 
+This project uses a [Dobot Magician](https://www.dobot.cc/dobot-magician/product-overview.html) arm with a [logitech C920s](https://www.logitech.com/en-us/product/hd-pro-webcam-c920s) webcam. The webcam is mounted to the send link of the robot to allow the same camera to be used to check for a paper in the workspace and look in any direction instructed for the scene to draw. 
 
 The setup currently uses a special short pen. Holding a regular length pen with most of the length beneath the end of the arm allows the pen to wobble and completely removes fine shading features. If a regular length pen is simply held higer up, the top end can hit the *unlock* button for manually moving the Dobot, which causes it to go into freefall if not held up. This caused the robot to faceplant onto the paper during prototyping. 
 
