@@ -1,5 +1,4 @@
 
-
 Chiaroscuro produces unsettling drawings that are never the same twice. All of these drawings show the same teapot with the same algorithm parameters and were drawn in about 30 minutes.
 
 ![Teapot drawing](images/drawings/teapot1.png)
