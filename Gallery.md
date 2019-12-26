@@ -1,6 +1,6 @@
 
 
-Chiaroscuro produces unsettling drawings that are never the same twice. All of these drawings show the same teapot. 
+Chiaroscuro produces unsettling drawings that are never the same twice. All of these drawings show the same teapot with the same algorithm parameters and were drawn in about 30 minutes.
 
 ![Teapot drawing](images/drawings/teapot1.png)
 
@@ -14,6 +14,6 @@ Chiaroscuro produces unsettling drawings that are never the same twice. All of t
 
 ![Teapot drawing](images/drawings/teapot6.png)
 
-The in-class demonstration drawing, with settings selected for speed above all else, is this: 
+The demonstration image, with parameters to reduce drawing time to 10 minutes: 
 
 ![In-class demo image](images/drawings/teapot_demo.png)
