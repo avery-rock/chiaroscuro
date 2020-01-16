@@ -1,17 +1,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % "Chiaroscuro" still life drawing robot, EECS 206A Final Project
-% Group 39: Avery Rock
-% email: avery_rock@berkeley.edu
-% SID: 3034290042
-% Dec. 12, 2019.
+
+% Project submitted Dec. 12, 2019.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function chiaroscuro
-
-% clear all; close all; clc;
-
-% global s % make the serial connection object global
 
 cleanupObj = onCleanup(@(s)cleanMeUp); % define shutdown sequence
 
@@ -32,17 +26,17 @@ try
     fwrite(s, home_cmd) % write command to dobot
     pause(20); % wait for homing to complete.
     
-    toPoint(0, 300, 110, s); % go to good point for seeing pedastle
+    toPoint(0, 300, 110, s); % go to good point for seeing paper
     pause(5)
     
     try
         cam = start_cam(); % try to start the camera and record a snapshot
     catch
-        fprintf("cam already define \n\n")
+        fprintf("cam already defined \n\n")
     end
-    I = snapshot(cam); % record single shot of camera
+    I = snapshot(cam); % record single image from camera
 catch
-    I = imread("dannydevito.jpg"); % if robot or camera throws an error, draw danny devito.
+    I = imread("dannydevito.jpg"); % if camera throws an error, draw danny devito.
 end
 
 %% PLAN DRAWING
@@ -63,7 +57,7 @@ try
     toPoint(180, 0, -20, s); % move to central location to check for paper
     pause(5)
     
-    if 1 || checkForPaper(cam)
+    if checkForPaper(cam)
         for i = 1:numel(x) % PTP DRAWING
             xx = x{i}*scale + maxx; yy = -y{i}*scale + maxy;
             pause(1)
@@ -80,6 +74,8 @@ try
     else
         fprintf("No paper detected. Shutting down safely...\n\n")
     end
+catch
+    fprintf("Unexpected error occured. Shutting down safely... 'n'n")
 end
 
     function cam = start_cam()
@@ -116,20 +112,6 @@ end
         PTP_cmd = make_cmd(payload);
         %     disp(PTP_cmd')
         fwrite(s, PTP_cmd);
-    end
-
-    function payload = SetCPParams_payload(Acc, Vel, period)
-        id = {'90'};
-        rwq = {'11'};
-        params = hexcoord([Acc, Vel, period]);
-        mode = {'01'}; % real time: 1
-        payload = [id, rwq, params, mode];
-    end
-
-    function CP_queue(x, y, z, s)
-        payload = CP_payload(x, y, z);
-        cmd = make_cmd(payload);
-        fwrite(s, cmd);
     end
 
     function payload = CP_payload(x, y, z)
@@ -212,7 +194,6 @@ end
         hex_str = bin2hex(b);
         s = cell(0);
         for i = 1:numel(hex_str)/2
-            
             s = [{hex_str(1 + 2*(i - 1):2*i )}, s];
         end
     end
@@ -225,26 +206,6 @@ end
         vals = bin2dec(b_str);
         out = dec2hex(vals, 8);
     end
-
-    function out = getPose_payload()
-        id = {'10'};
-        rwq = {'00'};
-        out = [id, rwq];
-    end
-
-    function out = getPose(s)
-        payload = getPose_payload();
-        getPose_cmd = make_cmd(payload);
-        fwrite(s, getPose_cmd);
-        pose = fread(s, 3 + 34);
-        out = pose; % need to invert the float thing to get actual numbers out of this: doable
-    end
-
-%     function STOP()
-%         payload = {'FD', '10'};
-%         cmd = make_cmd(payload);
-%         fwrite(s, cmd);
-%     end
 
     function cleanMeUp(s)
         toPoint(r(2) + r(3), 0, r(1), s); % perfectly upright
