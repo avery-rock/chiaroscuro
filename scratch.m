@@ -1,11 +1,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% "Chiaroscuro" still life drawing robot, EECS 206A Final Project
+% "Scratch" still life drawing robot, EECS 206A Final Project
 
 % Project submitted Dec. 12, 2019.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function chiaroscuro
+function scratch
 
 cleanupObj = onCleanup(@(s)cleanMeUp); % define shutdown sequence
 
@@ -40,7 +40,7 @@ catch
 end
 
 %% PLAN DRAWING
-[x, y, xscale, yscale] = drawme2(I);  % return line drawing paths and scale
+[x, y, xscale, yscale] = myDrawing(I);  % return line drawing paths and scale
 scale = min((ws(4) - ws(3))/yscale, (ws(2) - ws(1))/xscale); % find the more constricting dimension
 minx = ws(1); maxx = ws(2); miny = ws(3); maxy = ws(4);
 
