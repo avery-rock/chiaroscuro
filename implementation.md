@@ -1,6 +1,6 @@
 ## Overall Workflow
 
-![workflow](images/workflow.png)
+![workflow](images/misc/workflow.png)
 
 ## Hardware
 
@@ -25,11 +25,11 @@ The core of this algorithm grew by trial and error.
 
 The combination of these steps usually fills in most of each cluster while still keeping the order and detailed appearance random every time. See the [gallery](\https://avery-rock.github.io/chiaroscuro/Gallery) section for examples of multiple drawings of the same scene with the same settings. 
 
-![drawing plan](images/imageprocess.png)
+![drawing plan](images/misc/imageprocess.png)
 
 ## Path Planning
 
-![workspace](images/dobot_workspace.png)
+![workspace](images/misc/dobot_workspace.png)
 
 Currently, the robot is hard-coded with the location and size of the paper in its workspace. Once the drawing planning is complete, the planned path is scaled to the maximum size that can fit in the workspace (without changing its aspect ratio) and drawn in the upper left-hand corner. The only area of the workspace where a drawing of reasonable size can be made is directly in front of the robot. The entirety of a standard 8.5"x11" piece of paper cannot fit into the accessible workspace anywhere, and the available space is further reduced because the center of the workspace is approximately 120mm *above* the table. Using a long pen slightly expands the workspace at the expense of precision (see the *Hardware* section).
 
@@ -41,9 +41,9 @@ Dobot provides support for several common platforms including ROS, C and Matlab.
 
 The point-to-point control method reliably recreates planned drawings. The gains from continuous trajectories would be large for the edge drawing portion of the sketches but relatively small for the shading since the robot has to change directions all the time. 
 
-![Planned path from Danny Devito picture](images/danny_plan.png)
+![Planned path from Danny Devito picture](images/misc/danny_plan.png)
 
-![Danny devito picture as drawn](images/danny_drawn.png)
+![Danny devito picture as drawn](images/drawings/danny_drawn.png)
 
 ## Future Improvements
 
