@@ -4,7 +4,7 @@
 
 ## Hardware
 
-This project uses a [Dobot Magician](https://www.dobot.cc/dobot-magician/product-overview.html) arm with a [logitech C920s](https://www.logitech.com/en-us/product/hd-pro-webcam-c920s) webcam. The webcam is mounted to the second link of the robot to allow the same camera to be used to check for a paper in the workspace and look in any direction instructed for the scene to draw. 
+*Scratch* uses a [Dobot Magician](https://www.dobot.cc/dobot-magician/product-overview.html) arm with a [logitech C920s](https://www.logitech.com/en-us/product/hd-pro-webcam-c920s) webcam. The webcam is mounted to the second link of the robot to allow the same camera to be used to check for a paper in the workspace and look in any direction instructed for the scene to draw. 
 
 The setup currently uses a special short pen. Holding a regular-length pen with most of the length beneath the end of the arm allows the pen to wobble and completely removes fine shading features. If the pen is simply held higher up, the top end can press the *unlock* button for manually moving the Dobot, which causes the arm to go completely limp. This caused the robot to faceplant onto the paper during prototyping. 
 
@@ -23,7 +23,7 @@ To create the shading plan, the algorithm segments a black and white version of 
 
 The core of this algorithm grew by trial and error. 
 
-The combination of these steps usually fills in most of each cluster while still keeping the order and detailed appearance random every time. See the [gallery](\https://avery-rock.github.io/chiaroscuro/Gallery) section for examples of multiple drawings of the same scene with the same settings. 
+The combination of these steps usually fills in most of each cluster while still keeping the order and detailed appearance random every time. See the [gallery](\https://avery-rock.github.io/scratch/Gallery) section for examples of multiple drawings of the same scene with the same settings. 
 
 ![drawing plan](images/misc/imageprocess.png)
 
@@ -31,13 +31,13 @@ The combination of these steps usually fills in most of each cluster while still
 
 ![workspace](images/misc/dobot_workspace.png)
 
-Currently, the robot is hard-coded with the location and size of the paper in its workspace. Once the drawing planning is complete, the planned path is scaled to the maximum size that can fit in the workspace (without changing its aspect ratio) and drawn in the upper left-hand corner. The only area of the workspace where a drawing of reasonable size can be made is directly in front of the robot. The entirety of a standard 8.5"x11" piece of paper cannot fit into the accessible workspace anywhere, and the available space is further reduced because the center of the workspace is approximately 120mm *above* the table. Using a long pen slightly expands the workspace at the expense of precision (see the *Hardware* section).
+*Scratch* is currently hard-coded with the location and size of the paper in its workspace. Once the drawing is planned, the path is scaled to the maximum size that can fit in the workspace (without changing its aspect ratio) and drawn in the upper left-hand corner. The only area of the workspace where a drawing of reasonable size can be made is directly in front of the robot. The entirety of a standard 8.5"x11" piece of paper cannot fit into the accessible workspace anywhere, and the available space is further reduced because the center of the workspace is approximately 120mm *above* the table. Using a long pen slightly expands the workspace at the expense of precision (see the *Hardware* section).
 
 A more general version of this program could search the available workspace for a valid piece of paper, but for this project it was sufficient to check the one valid location. It does this by pointing the camera where it expects the paper to be and verifying that more than 90% of the pixels in the lower central region are lighter than the average pixel in the image. Placing the robot onto a light surface does NOT register as a piece of paper, and the paper must be well aligned to be accepted. 
 
 ## Robot Controller
 
-Dobot provides support for several common platforms including ROS, C and Matlab. These support resources proved unreliable and poorly documented to use and none were compatible with use on MacOS. In order to produce a working minimum viable product, I pivoted and recreated the core communication scripts in Matlab in order to send serial messages directly from Matlab to the Dobot. This required writing custom scripts to convert coordinate data into Dobot's hexadecimal float format. 
+Dobot provides support for several common platforms including ROS, C and Matlab. These support resources proved unreliable and poorly documented to use and none were compatible with use on MacOS. In order to produce a working minimum viable product, the implementation was changed and core communication scripts recreated in Matlab in order to send serial messages directly from Matlab to the Dobot. This required writing custom scripts to convert coordinate data into Dobot's hexadecimal float format. 
 
 The point-to-point control method reliably recreates planned drawings. The gains from continuous trajectories would be large for the edge drawing portion of the sketches but relatively small for the shading since the robot has to change directions all the time. 
 
@@ -47,7 +47,7 @@ The point-to-point control method reliably recreates planned drawings. The gains
 
 ## Future Improvements
 
-A more polished version of this project has potential as an attraction at a street fair or similar environment where customers could sit for photos, watch the robot drawing other people, and purchase pre-made drawings of recognizeable landmarks or amusing still-life scenes. The algorithm would need to be tuned to render faces in a more flattering light. 
+A more polished version of *Scratch* would be an entertaining feature at a street fair or similar environment. Guests could sit for photos, watch the robot drawing other people, and purchase pre-made drawings of celebrities, landmarks, or other scenes. The algorithm would need to be tuned to render faces in [a more flattering light](https://avery-rock.github.io/scratch/404) if portraits became a focus. 
 
 The current version of this project focuses on simplicity and reliability. There are several ways the speed, elegance and flexibility of the code could be improved, including: 
 
