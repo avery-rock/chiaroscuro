@@ -1,5 +1,5 @@
 
-Chiaroscuro produces unsettling drawings that are never the same twice. All of these drawings show the same teapot with the same system parameters. All drawing times were around 30 minutes unless otherwise noted. 
+*Scratch* produces unsettling drawings that are never the same twice. All of these drawings show the same teapot with the same system parameters. All drawing times were around 30 minutes unless otherwise noted. 
 
 ![Teapot drawing](images/drawings/teapot1.png)
 
